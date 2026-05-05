@@ -1,0 +1,289 @@
+# Part 2: TypeScript Integration
+
+In this section, you will create the TypeScript layer that bridges the compiled Compact contract to application code.
+
+## Contract package: witnesses and exports
+
+### Witness provider
+
+Create the witness file that provides the `getCustomName` function to the contract at runtime.
+
+```bash
+touch contract/src/witnesses.ts
+```
+
+This provides the `getCustomName` witness that the contract calls when a player submits with a custom display name. Witnesses return a `[newPrivateState, value]` tuple.
+
+```typescript
+let _customName = new Uint8Array(32);
+
+export const setCustomName = (name: string): void => {
+  _customName = new Uint8Array(32);
+  _customName.set(new TextEncoder().encode(name).slice(0, 32));
+};
+
+export const createWitnesses = () => ({
+  getCustomName: ({ privateState }: any) => [privateState, _customName],
+});
+```
+
+### Contract exports
+
+Create the contract exports file that bundles the contract definition, witnesses, and compiled circuit assets into a single object.
+
+```bash
+touch contract/src/index.ts
+```
+
+This bundles the contract definition, witnesses, and compiled circuit assets into a single object.
+
+```typescript
+import { CompiledContract } from '@midnight-ntwrk/compact-js';
+
+export * as Leaderboard from '../managed/leaderboard/contract/index.js';
+export { createWitnesses, setCustomName } from './witnesses.js';
+
+import * as LeaderboardContract from '../managed/leaderboard/contract/index.js';
+import { createWitnesses } from './witnesses.js';
+
+export type LeaderboardPrivateState = Record<string, unknown>;
+
+export const CompiledLeaderboardContract = CompiledContract.make(
+  'leaderboard',
+  LeaderboardContract.Contract,
+).pipe(
+  CompiledContract.withWitnesses(createWitnesses()),
+  CompiledContract.withCompiledFileAssets('./managed/leaderboard'),
+);
+```
+
+Build the contract package.
+
+```bash
+cd contract && npm run build && cd ..
+```
+
+## API package
+
+Create the API package directory and its `package.json`. This package wraps all contract interactions in a platform-agnostic `LeaderboardAPI` class.
+
+```bash
+mkdir -p api/src/utils
+touch api/package.json
+```
+
+The API package compiles to `dist/` and exposes its entry point for the UI to import.
+
+```json
+{
+  "name": "@midnight-ntwrk/leaderboard-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc --project tsconfig.build.json"
+  }
+}
+```
+
+Create the TypeScript configuration for the API package. It uses the same `"Bundler"` module resolution as the contract package.
+
+```bash
+touch api/tsconfig.json
+```
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "declaration": true,
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}
+```
+
+The build configuration extends the base and excludes test files from compilation.
+
+```bash
+touch api/tsconfig.build.json
+```
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["src/test"]
+}
+```
+
+### Types
+
+Create the shared type definitions. These define the provider interface that each platform must satisfy, along with the types for leaderboard entries and derived state.
+
+```bash
+touch api/src/common-types.ts
+```
+
+`MidnightProviders` represents all the services a DApp needs: proof generation, state storage, indexer access, wallet operations, and ZK config. The `LeaderboardCircuitKeys` type lists the circuit names from the contract.
+
+```typescript
+import { type MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
+import { type FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { type LeaderboardPrivateState } from '../../contract/src/index';
+
+export const leaderboardPrivateStateKey = 'leaderboardPrivateState';
+export type PrivateStateId = typeof leaderboardPrivateStateKey;
+
+export type LeaderboardCircuitKeys = 'submitScore' | 'getEntryCount' | 'verifyOwnership';
+export type LeaderboardProviders = MidnightProviders<LeaderboardCircuitKeys, PrivateStateId, LeaderboardPrivateState>;
+export type DeployedLeaderboardContract = FoundContract<any>;
+
+export interface LeaderboardEntry {
+  readonly id: number;
+  readonly score: number;
+  readonly displayName: string;
+  readonly ownerHash: string;
+}
+
+export interface LeaderboardDerivedState {
+  readonly entryCount: number;
+  readonly entries: LeaderboardEntry[];
+}
+```
+
+### Display name decoder
+
+```bash
+touch api/src/utils/index.ts
+```
+
+This converts raw `Bytes<32>` from the ledger into display names. Printable ASCII (custom/public mode) is returned as-is. Non-ASCII (anonymous mode) is converted into a deterministic generated name.
+
+```typescript
+const ADJECTIVES = [
+  'Crimson', 'Shadow', 'Silver', 'Crystal', 'Golden', 'Ember', 'Frost', 'Storm',
+  'Iron', 'Cobalt', 'Jade', 'Onyx', 'Scarlet', 'Azure', 'Violet', 'Neon',
+  'Phantom', 'Rogue', 'Cosmic', 'Lunar', 'Solar', 'Arctic', 'Mystic', 'Nova',
+  'Stealth', 'Prism', 'Cipher', 'Echo', 'Apex', 'Dusk', 'Blaze', 'Volt',
+];
+const NOUNS = [
+  'Tiger', 'Phoenix', 'Wolf', 'Dragon', 'Falcon', 'Viper', 'Raven', 'Lynx',
+  'Panther', 'Hawk', 'Cobra', 'Mantis', 'Shark', 'Eagle', 'Jaguar', 'Owl',
+  'Fox', 'Bear', 'Crane', 'Orca', 'Sphinx', 'Hydra', 'Puma', 'Scorpion',
+  'Raptor', 'Griffin', 'Coyote', 'Badger', 'Bison', 'Condor', 'Stag', 'Wasp',
+];
+
+export const decodeDisplayName = (bytes: Uint8Array, entryId: number, score: number): string => {
+  const decoded = new TextDecoder().decode(bytes).replace(/\0/g, '').trim();
+  if (decoded.length > 0 && decoded.split('').every((c) => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127)) {
+    return decoded;
+  }
+  const h = (bytes[0] << 24 | bytes[1] << 16 | bytes[2] << 8 | bytes[3]) >>> 0;
+  const seed = (h ^ (entryId * 2654435761) ^ (score * 1597334677)) >>> 0;
+  return `${ADJECTIVES[seed % ADJECTIVES.length]} ${NOUNS[(seed >>> 16) % NOUNS.length]}`;
+};
+```
+
+### LeaderboardAPI class
+
+```bash
+touch api/src/index.ts
+```
+
+This wraps `deployContract` and `findDeployedContract` from `midnight-js-contracts`. The `submitScore` method conditionally calls `setCustomName` before the transaction. The `!!customName` expression converts the presence of a name into the boolean the contract expects.
+
+```typescript
+import * as Leaderboard from '../../contract/managed/leaderboard/contract/index.js';
+import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
+import { type Logger } from 'pino';
+import {
+  type LeaderboardDerivedState,
+  type LeaderboardEntry,
+  type LeaderboardProviders,
+  type DeployedLeaderboardContract,
+  leaderboardPrivateStateKey,
+} from './common-types.js';
+import { CompiledLeaderboardContract, type LeaderboardPrivateState } from '../../contract/src/index';
+import { setCustomName } from '../../contract/src/witnesses.js';
+import * as utils from './utils/index.js';
+import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
+import { map, type Observable } from 'rxjs';
+
+export class LeaderboardAPI {
+  private constructor(
+    public readonly deployedContract: DeployedLeaderboardContract,
+    providers: LeaderboardProviders,
+    private readonly logger?: Logger,
+  ) {
+    this.deployedContractAddress = deployedContract.deployTxData.public.contractAddress;
+    providers.privateStateProvider.setContractAddress(this.deployedContractAddress);
+
+    this.state$ = providers.publicDataProvider
+      .contractStateObservable(this.deployedContractAddress, { type: 'latest' })
+      .pipe(
+        map((contractState) => Leaderboard.ledger(contractState.data)),
+        map((ledgerState): LeaderboardDerivedState => {
+          const entries: LeaderboardEntry[] = [];
+          for (const [key, entry] of ledgerState.scores) {
+            entries.push({
+              id: Number(key),
+              score: Number(entry.score),
+              displayName: utils.decodeDisplayName(entry.displayName, Number(key), Number(entry.score)),
+              ownerHash: entry.ownerHash.toString(),
+            });
+          }
+          entries.sort((a, b) => b.score - a.score);
+          return { entryCount: Number(ledgerState.nextId), entries };
+        }),
+      );
+  }
+
+  readonly deployedContractAddress: ContractAddress;
+  readonly state$: Observable<LeaderboardDerivedState>;
+
+  async submitScore(score: number, customName?: string): Promise<void> {
+    if (customName) { setCustomName(customName); }
+    await (this.deployedContract as any).callTx.submitScore(BigInt(score), !!customName);
+  }
+
+  async verifyOwnership(entryId: number): Promise<void> {
+    await (this.deployedContract as any).callTx.verifyOwnership(BigInt(entryId));
+  }
+
+  static async deploy(providers: LeaderboardProviders, logger?: Logger): Promise<LeaderboardAPI> {
+    const deployedContract = await deployContract(providers as any, {
+      compiledContract: CompiledLeaderboardContract,
+      privateStateId: leaderboardPrivateStateKey,
+      initialPrivateState: {} as LeaderboardPrivateState,
+    });
+    return new LeaderboardAPI(deployedContract, providers, logger);
+  }
+
+  static async join(providers: LeaderboardProviders, contractAddress: ContractAddress, logger?: Logger): Promise<LeaderboardAPI> {
+    const deployedContract = await findDeployedContract(providers as any, {
+      contractAddress,
+      compiledContract: CompiledLeaderboardContract,
+      privateStateId: leaderboardPrivateStateKey,
+      initialPrivateState: {} as LeaderboardPrivateState,
+    });
+    return new LeaderboardAPI(deployedContract, providers, logger);
+  }
+}
+
+export * as utils from './utils/index.js';
+export * from './common-types.js';
+```
+
+Build both packages.
+
+```bash
+npm run build
+```

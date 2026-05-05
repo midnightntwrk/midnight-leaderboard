@@ -1,0 +1,6 @@
+{
+  "buildCommand": "cd contract && npm run build && cd ../api && npm run build && cd ../leaderboard-ui && npm run build",
+  "outputDirectory": "leaderboard-ui/dist",
+  "installCommand": "npm install",
+  "framework": null
+}

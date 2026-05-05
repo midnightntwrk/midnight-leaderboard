@@ -1,0 +1,83 @@
+/**
+ * Arcade-Style Privacy-Preserving Leaderboard for Midnight Network
+ *
+ * Every score submission creates a new entry on the leaderboard,
+ * just like an arcade cabinet. The same player can appear multiple
+ * times. The frontend displays the top N scores.
+ *
+ * Key concepts demonstrated:
+ *   Map<Uint<64>, ScoreEntry> — structured on-chain data with auto-incrementing keys
+ *   Witnesses — private data (custom name) fed into ZK circuits on demand
+ *   Ownership verification — prove you own an entry without revealing identity
+ */
+
+pragma language_version >= 0.23;
+
+import CompactStandardLibrary;
+
+struct ScoreEntry {
+  score: Uint<64>,
+  displayName: Bytes<32>,
+  ownerHash: Bytes<32>
+}
+
+export ledger scores: Map<Uint<64>, ScoreEntry>;
+export ledger nextId: Counter;
+
+// Witness: provides private data (custom display name) to the circuit.
+// The name lives only on the client until the user chooses to disclose it.
+witness getCustomName(): Bytes<32>;
+
+/**
+ * Submit a score to the leaderboard.
+ * Every call creates a new entry — arcade style.
+ *
+ * When useCustomName is true, the witness getCustomName() is called,
+ * demonstrating how private data enters a ZK circuit on demand.
+ * When false, a hash of the public key is used as an anonymous identifier.
+ */
+export circuit submitScore(
+  score: Uint<64>,
+  useCustomName: Boolean
+): [] {
+  const userPublicKey = ownPublicKey();
+  const ownerHash = persistentHash<Bytes<32>>(userPublicKey.bytes);
+
+  nextId.increment(1);
+  const entryId = disclose(nextId.read() as Uint<64>);
+
+  if (disclose(useCustomName)) {
+    const customName = getCustomName();
+    scores.insert(entryId, ScoreEntry {
+      score: disclose(score),
+      displayName: disclose(customName),
+      ownerHash: disclose(ownerHash)
+    });
+  } else {
+    scores.insert(entryId, ScoreEntry {
+      score: disclose(score),
+      displayName: disclose(persistentHash<Bytes<32>>(userPublicKey.bytes)),
+      ownerHash: disclose(ownerHash)
+    });
+  }
+}
+
+/**
+ * Prove ownership of a leaderboard entry via ZK proof.
+ *
+ * The caller proves that their public key hashes to the ownerHash
+ * stored in the entry — without revealing the public key itself.
+ * The proof is private — use it to claim a prize, verify identity,
+ * or present to a badge system.
+ */
+export circuit verifyOwnership(targetEntryId: Uint<64>): [] {
+  assert(scores.member(disclose(targetEntryId)), "entry not found");
+  const entry = scores.lookup(disclose(targetEntryId));
+  const callerHash = persistentHash<Bytes<32>>(ownPublicKey().bytes);
+  assert(callerHash == entry.ownerHash, "not the owner");
+}
+
+/** Get total number of entries on the leaderboard. */
+export circuit getEntryCount(): Uint<64> {
+  return nextId.read() as Uint<64>;
+}

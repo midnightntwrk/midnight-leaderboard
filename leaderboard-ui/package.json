@@ -1,0 +1,42 @@
+{
+  "name": "leaderboard-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "mkdir -p ./public/keys ./public/zkir && cp -r ../contract/managed/leaderboard/keys/* ./public/keys/ && cp -r ../contract/managed/leaderboard/zkir/* ./public/zkir/ && vite",
+    "build": "tsc && vite build --mode preprod && cp -r ../contract/managed/leaderboard/keys ./dist/keys && cp -r ../contract/managed/leaderboard/zkir ./dist/zkir",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/compact-runtime": "^0.16.0",
+    "@midnight-ntwrk/midnight-js-contracts": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-network-id": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-types": "^4.0.4",
+    "@midnight-ntwrk/midnight-js-utils": "^4.0.4",
+    "@midnight-ntwrk/wallet-sdk-address-format": "^3.0.0",
+    "@midnight-ntwrk/ledger-v8": "^8.0.3",
+    "buffer": "^6.0.3",
+    "fp-ts": "^2.16.11",
+    "leaderboard-contract": "*",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rxjs": "^7.8.2",
+    "semver": "^7.7.4",
+    "pino": "^10.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/semver": "^7.7.1",
+    "@vitejs/plugin-react": "^5.1.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.5.0"
+  }
+}

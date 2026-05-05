@@ -1,0 +1,8 @@
+{
+  "version": 3,
+  "file": "index.js",
+  "sourceRoot": "../../../",
+  "sources": ["leaderboard.compact", "compiler/standard-library.compact"],
+  "names": [],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;EAaA;;;;;;;;;;;;;MAyBA,AAAA,WAwBC;;;;;cAvBC,OAAe;cACf,eAAsB;;;;;;;;;;;;;;;;;;;;;;;;;yCADtB,OAAe,+BACf,eAAsB;;;;;;;;;6CADtB,OAAe;6CACf,eAAsB;;;OAsBvB;MAUD,AAAA,eAKC;;;;;cAL8B,eAAuB;;;;;;;;;;;;;;;;;;yCAAvB,eAAuB;;;;;;;;;iDAAvB,eAAuB;;;OAKrD;MAGD,AAAA,aAEC;;;;;;;;;;;;;;;;;;;;;;OAAA;;;;;;;;;;;;GACA;EAtED;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;IAUA;;;;;;;;;;yEAAgD;IAChD;;;;;;;;;yEAA8B;;;;;;;GA2D7B;ECnFD,AAAA,kBAAA;oEAAA;;;EAAA,AAAA;;;;;;;;ED4BA,AAAA,gBAAmC;;0DAAnC,aAAmC;;;;;;;;;;;;;;GAAA;EAUnC,AAAA,cAwBC,4BAvBC,OAAe,EACf,eAAsB;UAEhB,eAA8B;UAC9B,WAA0D,0BAApB,eAAa;UAEzD,KAAM;IAAN;;;;;;;;;;6FAAA,KAAM;;;;wEAAA;UACA,SAA6C,2BAA1B;;;;;;;;;;;mHAAM;QAElB,eAAa;YAClB,YAA4B;YAClC,KAAM,YACY,OAAK;mCACC,YAAU;iCACZ,WAAS;MAH/B;;;;;;;;;;6HAAc,SAAO;;;6HAArB,KAAM;;;0EAAA;;YAMN,KAAM,YACY,OAAK;0DAC2B,eAAa;iCACzC,WAAS;MAH/B;;;;;;;;;;6HAAc,SAAO;;;6HAArB,KAAM;;;0EAAA;;;GAMT;EAUD,AAAA,kBAKC,4BAL8B,eAAuB;oDAC7C;;;;;;;;;;;2KAAuB,eAAa;;;;yHAA9B;;UACP,OAA8C,2BAAtC;;;;;;;;;;;;;;uIAAuB,eAAa;;;iHAA9B;UACd,YAA4D;;0CAC3D,YAAU,EAAI,OAAK;;;GAC3B;EAGD,AAAA,gBAEC;mCADQ;;;;;;;;;;;wGAAM;GACd;;;;;;;;;;;;;;;;;;;;IA3DD;;;;;uCAAA;;;;;;;;;;;;;;;;4GAAgD;;;;;;uCAAhD;;;;;;;;;;;;4GAAgD;;;;;;;;;;;;;;uCAAhD;;;;;;;;;;;;;;;4GAAgD;;;;;;;;;;;;;;uCAAhD;;;;;;;;;;;;;;;;;4GAAgD;;;;;;;;;KAAA;IAChD;qCAAA;;;;;;;;;;;0GAA8B;KAAA;;;;;;;;;;"
+}
