@@ -31,6 +31,7 @@ The Dockerfile pulls the official proof server image and starts it on the Prepro
 
 ```dockerfile
 FROM midnightntwrk/proof-server:8.0.3
+USER 1000
 CMD ["midnight-proof-server", "--network", "preprod"]
 ```
 
