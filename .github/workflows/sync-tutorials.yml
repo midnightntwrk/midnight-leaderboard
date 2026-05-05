@@ -1,0 +1,43 @@
+name: Sync tutorials to docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tutorials/**'
+
+jobs:
+  sync-tutorials:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout leaderboard repo
+        uses: actions/checkout@v4
+        with:
+          path: leaderboard
+
+      - name: Checkout docs repo
+        uses: actions/checkout@v4
+        with:
+          repository: midnightntwrk/midnight-docs
+          token: ${{ secrets.DEVREL_DOCS_PR_TOKEN }}
+          path: docs
+
+      - name: Copy tutorials to docs
+        run: |
+          mkdir -p docs/docs/tutorials/leaderboard
+          cp leaderboard/tutorials/*.mdx docs/docs/tutorials/leaderboard/
+          cp leaderboard/tutorials/_category_.json docs/docs/tutorials/leaderboard/
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: docs
+          token: ${{ secrets.DEVREL_DOCS_PR_TOKEN }}
+          commit-message: "docs: update leaderboard tutorial from midnightntwrk/midnight-leaderboard"
+          title: "docs: update leaderboard tutorial"
+          body: |
+            Automated PR syncing tutorial changes from [midnight-leaderboard](https://github.com/midnightntwrk/midnight-leaderboard).
+
+            This PR was created automatically by the `sync-tutorials` workflow.
+          branch: sync/leaderboard-tutorial
+          delete-branch: true
