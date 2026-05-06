@@ -2,19 +2,20 @@
 SPDX-License-Identifier: Apache-2.0
 copyright: This file is part of midnight-docs. Copyright (C) Midnight Foundation. Licensed under the Apache License, Version 2.0 (the "License"); You may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 sidebar_label: "Leaderboard overview"
-title: "Building a privacy-preserving leaderboard DApp"
+title: "Build a privacy-preserving leaderboard DApp"
 description: "Build a full-stack DApp on the Midnight Network with privacy modes, ownership verification, and Lace wallet integration."
 sidebar_position: 1
 toc_max_heading_level: 2
+tags: ["tutorial", "dapp", "leaderboard", "compact", "privacy", "lace", "typescript"]
 ---
 
-# Building a Privacy-Preserving Leaderboard DApp
+# Build a privacy-preserving leaderboard DApp
 
-This tutorial walks you through building a full-stack DApp on the Midnight Network. You will write a Compact smart contract, integrate it with TypeScript, build a browser-based frontend with Lace wallet support, and deploy the finished application to production.
+This tutorial walks you through building a full-stack DApp on the Midnight Network. You write a Compact smart contract, integrate it with TypeScript, build a browser-based frontend with Lace wallet support, and deploy the finished application to production.
 
-By the end, you will have a working arcade-style leaderboard where players submit scores with privacy controls and prove ownership of entries using zero-knowledge proofs.
+By the end, you have a working arcade-style leaderboard where players submit scores with privacy controls and prove ownership of entries using zero-knowledge proofs.
 
-## What you will learn
+## What you learn
 
 **Smart contract (Compact):** defining structured on-chain data with `Map`, `Counter`, and custom structs; controlling what data goes on-chain with `disclose()`; using witnesses to feed private data into ZK circuits on demand; using `assert` to enforce ownership checks; hashing with `persistentHash` for anonymous identity.
 
@@ -35,7 +36,7 @@ By the end, you will have a working arcade-style leaderboard where players submi
 **Wallet setup:**
 1. Install the Lace extension and create a new wallet
 2. Set the network to **Preprod**
-3. Set the proof server to **http://localhost:6300**
+3. Set the proof server to `http://localhost:6300`
 4. Fund your wallet with tNIGHT from the [Preprod faucet](https://faucet.preprod.midnight.network/)
 5. Go to Tokens, click **Generate tDUST**, and confirm the transaction
 
@@ -72,10 +73,10 @@ midnight-leaderboard/
 
 | Section | What you build |
 |---------|---------------|
-| [Part 1: Smart Contract](./02-smart-contract.mdx) | Write the Compact contract with privacy modes and ownership verification |
-| [Part 2: TypeScript Integration](./03-api-layer.mdx) | Set up the contract package, witnesses, and shared API layer |
+| [Part 1: Smart contract](./02-smart-contract.mdx) | Write the Compact contract with privacy modes and ownership verification |
+| [Part 2: TypeScript integration](./03-api-layer.mdx) | Set up the contract package, witnesses, and shared API layer |
 | [Part 3: Browser DApp](./04-browser-dapp.mdx) | Build the React frontend with Lace wallet and indexer reads |
-| [Part 4: Production Deployment](./05-deployment.mdx) | Deploy to Vercel (frontend) and Railway (proof server) |
+| [Part 4: Production deployment](./05-deployment.mdx) | Deploy to Vercel (frontend) and Railway (proof server) |
 
 ## Compatibility
 
@@ -83,9 +84,9 @@ This tutorial targets the following versions from the [compatibility matrix](htt
 
 | Component | Version |
 |-----------|---------|
-| Compact Compiler | 0.31.0 |
-| Compact Runtime | 0.16.0 |
+| Compact compiler | 0.31.0 |
+| Compact runtime | 0.16.0 |
 | Ledger | 8.0.3 |
 | midnight-js | 4.0.4 |
-| DApp Connector API | 4.0.1 |
-| Proof Server | 8.0.3 |
+| DApp connector API | 4.0.1 |
+| proof server | 8.0.3 |

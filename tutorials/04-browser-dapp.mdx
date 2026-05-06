@@ -3,14 +3,15 @@ SPDX-License-Identifier: Apache-2.0
 copyright: This file is part of midnight-docs. Copyright (C) Midnight Foundation. Licensed under the Apache License, Version 2.0 (the "License"); You may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 sidebar_label: "Browser DApp"
 title: "Browser DApp"
-description: "Build a React frontend with Lace wallet integration, indexer reads, and on-chain score submission."
+description: "Build a React frontend that connects to the Lace wallet, reads leaderboard state from the Midnight indexer, and submits scores on-chain with privacy modes."
 sidebar_position: 4
 toc_max_heading_level: 2
+tags: ["react", "dapp", "lace", "wallet", "browser", "frontend", "midnight-js", "indexer", "tutorial"]
 ---
 
 # Part 3: Browser DApp
 
-In this section, you will build a React frontend that connects to the Lace wallet, reads leaderboard data from the indexer, submits scores on-chain, and lets players prove ownership of their entries.
+In this section, you build a React frontend that connects to the Lace wallet and reads leaderboard data from the indexer. The frontend also submits scores on-chain and lets you prove ownership of your entries.
 
 ## Set up the UI package
 
@@ -144,7 +145,7 @@ export default defineConfig({
 
 ## TypeScript config
 
-The TypeScript configuration needs `"types": ["vite/client"]` so that `import.meta.env` references compile correctly. The `"bundler"` module resolution is required for Midnight SDK subpath imports.
+The TypeScript configuration needs `"types": ["vite/client"]` so that `import.meta.env` references compile correctly. Midnight SDK subpath imports require the `"bundler"` module resolution.
 
 ```bash
 touch leaderboard-ui/tsconfig.json
@@ -192,7 +193,7 @@ VITE_PROOF_SERVER_URL=http://localhost:6300
 
 ## HTML entry point
 
-Create the HTML shell that Vite uses as the application entry point. The `src/main.tsx` script is loaded as an ES module.
+Create the HTML shell that Vite uses as the application entry point. The browser loads the `src/main.tsx` script as an ES module.
 
 ```bash
 touch leaderboard-ui/index.html
@@ -370,7 +371,7 @@ export const inMemoryPrivateStateProvider = <PSI extends PrivateStateId, PS = un
 };
 ```
 
-## Reading on-chain state
+## Read on-chain state
 
 This hook queries the Midnight indexer directly via GraphQL, deserializes the contract state, and parses it using the compiled contract's `ledger()` function. It imports `decodeDisplayName` from the API utils created in Part 2 to convert raw `Bytes<32>` into readable names. It auto-refreshes every 15 seconds and requires no wallet connection.
 
@@ -467,9 +468,9 @@ export function useLeaderboard(contractAddress: string | null, refreshInterval =
 
 The `BrowserLeaderboardManager` connects to the Lace wallet via the DApp Connector API, initializes all providers, and delegates contract operations to the `LeaderboardAPI`.
 
-The `walletProvider.balanceTx` method is the bridge between the DApp and the user's wallet. The DApp builds an unbalanced transaction with the contract circuit proof, sends it to Lace for balancing (adding DUST fees and Zswap proofs), and gets back a finalized transaction ready to submit.
+The `walletProvider.balanceTx` method bridges the DApp and your wallet. The DApp builds an unbalanced transaction with the contract circuit proof and sends it to Lace for balancing. Lace adds DUST fees and Zswap proofs, then returns a finalized transaction ready to submit.
 
-`setNetworkId()` must be called before initializing any providers.
+Call `setNetworkId()` before initializing any providers.
 
 ```bash
 touch leaderboard-ui/src/contexts/BrowserLeaderboardManager.ts
@@ -608,7 +609,7 @@ The `App.tsx` component ties everything together: wallet detection, the click ch
 
 The three UI privacy modes map to two contract paths. Anonymous sends `undefined` as the custom name, triggering the contract's `else` branch which stores a hash as the display name. Public and Custom both send a string through the witness (the wallet address or a user-typed name), triggering the contract's `if` branch.
 
-Ownership verification calls `verifyOwnership` on the API and tracks verified entries in local React state. If the caller is not the owner, the contract's `assert` fails and the transaction is rejected.
+Ownership verification calls `verifyOwnership` on the API and tracks verified entries in local React state. If the caller is not the owner, the contract's `assert` fails and the network rejects the transaction.
 
 ```bash
 touch leaderboard-ui/src/App.tsx
