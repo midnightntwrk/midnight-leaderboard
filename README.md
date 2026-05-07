@@ -1,72 +1,158 @@
-# Midnight Template Repository
+# Midnight Leaderboard
 
-This GitHub repository should be used as a template when creating a new Midnight GitHub repository.
-The template is configured with default repository settings and a set of default files that are expected to exist in all Midnight GitHub repositories.
+An arcade-style privacy-preserving leaderboard built on the [Midnight Network](https://midnight.network). Every score submission creates a new entry, just like an arcade cabinet. Players choose how their identity appears: anonymous, public wallet address, or custom display name. Prove ownership of your scores via ZK proofs without revealing your identity.
 
-### LICENSE
+Live on Preprod: [midnight-leaderboard.vercel.app](https://midnight-leaderboard.vercel.app)
 
-Apache 2.0.
+## What It Demonstrates
 
-### README.md
+| Concept | What You Learn |
+|---------|---------------|
+| `Map<Uint<64>, ScoreEntry>` | Storing structured data on-chain with auto-incrementing keys |
+| Privacy modes | Anonymous, public address, or custom name via conditional witness invocation |
+| Witness functions | Private data (custom name) enters the ZK circuit on demand |
+| Ownership verification | Prove you own an entry without revealing your identity |
+| Browser DApp | Lace wallet integration, in-browser ZK proving, real-time indexer reads |
+| Production deployment | Vercel (frontend) + Railway (proof server) |
 
-Provides a brief description for users and developers who want to understand the purpose, setup, and usage of the repository.
+## Tutorial
 
-### SECURITY.md
+Follow the step-by-step tutorial in [tutorials/](./tutorials/) to rebuild this DApp from scratch. The tutorial covers the Compact smart contract, TypeScript integration, browser DApp with Lace wallet, and production deployment.
 
-Provides a brief description of the Midnight Foundation's security policy and how to properly disclose security issues.
+## Project Structure
 
-### CONTRIBUTING.md
+```
+midnight-leaderboard/
+├── contract/                        # Compact smart contract
+│   ├── leaderboard.compact          # Leaderboard with anonymous/custom names + verification
+│   ├── src/
+│   │   ├── index.ts                 # Exports CompiledLeaderboardContract + witnesses
+│   │   └── witnesses.ts             # getCustomName witness (private data → ZK proof)
+│   └── managed/                     # Compiler output (committed for Vercel builds)
+├── api/                             # Shared business logic (platform-agnostic)
+│   └── src/
+│       ├── index.ts                 # LeaderboardAPI: deploy(), join(), submitScore(), verifyOwnership()
+│       ├── common-types.ts          # Provider types, circuit keys, derived state
+│       └── utils/index.ts           # decodeDisplayName with generated anonymous names
+├── leaderboard-ui/                  # React + Vite frontend
+│   ├── src/
+│   │   ├── App.tsx                  # Game UI + leaderboard + verification
+│   │   ├── App.css                  # Midnight-branded dark theme
+│   │   ├── main.tsx                 # Buffer polyfill + React mount
+│   │   ├── contexts/
+│   │   │   └── BrowserLeaderboardManager.ts  # Lace wallet → providers bridge
+│   │   ├── hooks/
+│   │   │   └── useLeaderboard.ts    # Read-only indexer queries (no wallet needed)
+│   │   └── in-memory-private-state-provider.ts
+│   ├── .env.preprod                 # Production config (Railway proof server URL)
+│   └── vite.config.ts               # WASM plugins for compact-runtime in browser
+├── tutorials/                       # Step-by-step build tutorial
+├── proof-server/                    # Railway deployment
+│   └── Dockerfile                   # Midnight proof server image
+├── vercel.json                      # Vercel build config
+└── package.json                     # Workspaces: contract, api, leaderboard-ui
+```
 
-Provides guidelines for how people can contribute to the Midnight project.
+## Prerequisites
 
-### CODEOWNERS
+- [Node.js v22+](https://nodejs.org/) (via `nvm use 22`)
+- [Compact toolchain](https://docs.midnight.network/getting-started/installation#install-compact)
+- [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension
+- [Docker](https://docs.docker.com/desktop/) (for local proof server)
 
-Defines repository ownership rules.
+## Quick Start
 
-### ISSUE_TEMPLATE
+### 1. Install, compile, and build
 
-Provides templates for reporting various types of issues, such as: bug report, documentation improvement and feature request.
+```bash
+nvm use 22
+npm install
+npm run compile
+npm run build
+```
 
-### PULL_REQUEST_TEMPLATE
+### 2. Start the proof server
 
-Provides a template for a pull request.
+```bash
+docker run -d -p 6300:6300 midnightntwrk/proof-server:8.0.3 -- midnight-proof-server --network preprod
+```
 
-### CLA Assistant
+### 3. Start the UI
 
-The Midnight Foundation appreciates contributions, and like many other open source projects asks contributors to sign a contributor
-License Agreement before accepting contributions. We use CLA assistant (https://github.com/cla-assistant/cla-assistant) to streamline the CLA
-signing process, enabling contributors to sign our CLAs directly within a GitHub pull request.
+```bash
+cd leaderboard-ui
+npm run dev
+```
 
-### Dependabot
+Open `http://localhost:3000` in Chrome with Lace installed.
 
-The Midnight Foundation uses GitHub Dependabot feature to keep our projects dependencies up-to-date and address potential security vulnerabilities.
+### 4. Play
 
-### Checkmarx
+1. The leaderboard loads immediately from the indexer (no wallet needed to view)
+2. Connect your Lace wallet to submit scores
+3. Click **Switch Contract** then **Deploy New** to deploy your own leaderboard
+4. Play the click challenge
+5. Submit your score as Anonymous, Public, or Custom
+6. Click "Prove" on any entry to verify ownership via ZK proof
 
-The Midnight Foundation uses Checkmarx for application security (AppSec) to identify and fix security vulnerabilities.
-All repositories are scanned with Checkmarx's suite of tools including: Static Application Security Testing (SAST), Infrastructure as Code (IaC), Software Composition Analysis (SCA), API Security, Container Security and Supply Chain Scans (SCS).
+## Contract
 
-### Unito
+### Privacy Modes
 
-Facilitates two-way data synchronization, automated workflows and streamline processes between: Jira, GitHub issues and Github project Kanban board.
+| Mode | Display Name | How It Works |
+|------|-------------|-------------|
+| Anonymous | Generated name (e.g., "Crimson Tiger") | `persistentHash(publicKey)` stored as hash bytes, UI generates readable name |
+| Public | Truncated wallet address | Wallet address sent via witness as custom name |
+| Custom | Player's chosen name | Player types a name, sent via `getCustomName()` witness |
 
-# TODO - New Repo Owner
+All modes store `ownerHash = persistentHash(publicKey)` as `Bytes<32>` on each entry, enabling ownership verification without revealing identity.
 
-### Software Package Data Exchange (SPDX)
-Include the following Software Package Data Exchange (SPDX) short-form identifier in a comment at the top headers of each source code file.
+### Circuits
 
+| Circuit | Purpose |
+|---------|---------|
+| `submitScore(score, useCustomName)` | Create a new leaderboard entry |
+| `verifyOwnership(targetEntryId)` | Prove you own an entry (for prizes, badges) |
+| `getEntryCount()` | Read total number of entries |
 
- <I>// This file is part of <B>REPLACE WITH REPO-NAME</B>.<BR>
- // Copyright (C) Midnight Foundation<BR>
- // SPDX-License-Identifier: Apache-2.0<BR>
- // Licensed under the Apache License, Version 2.0 (the "License");<BR>
- // You may not use this file except in compliance with the License.<BR>
- // You may obtain a copy of the License at<BR>
- //<BR>
- //	https://www.apache.org/licenses/LICENSE-2.0<BR>
- //<BR>
- // Unless required by applicable law or agreed to in writing, software<BR>
- // distributed under the License is distributed on an "AS IS" BASIS,<BR>
- // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.<BR>
- // See the License for the specific language governing permissions and<BR>
- // limitations under the License.</I>
+## Production Deployment
+
+The DApp runs on two services: Vercel for the static frontend (free) and Railway for the proof server ($5/mo).
+
+The proof server is needed because browser JavaScript cannot reach Midnight's public proof server directly (CORS). Railway runs its own instance of the proof server Docker image, which accepts requests from any origin.
+
+### Proof server (Railway)
+
+1. Go to [railway.app](https://railway.app) and sign in with GitHub
+2. Create a new project from this repo
+3. Set **Root Directory** to `proof-server`
+4. In **Settings**, then **Networking**, set port to `6300` and generate a domain
+5. Copy the HTTPS URL
+
+### Frontend (Vercel)
+
+1. Import the repo into [Vercel](https://vercel.com)
+2. Vercel reads `vercel.json` automatically
+3. Make sure **Root Directory** is empty (not set to a subdirectory)
+4. Deploy
+
+Circuit keys are committed in `contract/managed/` so no Compact compiler is needed on Vercel.
+
+## Compatibility
+
+Built against the [Midnight compatibility matrix](https://docs.midnight.network/relnotes/support-matrix):
+
+| Component | Version |
+|-----------|--------|
+| Compact Compiler | 0.31.0 |
+| Compact Runtime | 0.16.0 |
+| Ledger | 8.0.3 |
+| midnight-js | 4.0.4 |
+| DApp Connector API | 4.0.1 |
+| Proof Server | 8.0.3 |
+
+## License
+
+Apache-2.0
+
+Built on the [Midnight Network](https://midnight.network).
