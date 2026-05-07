@@ -9,6 +9,8 @@ on:
 jobs:
   sync-tutorials:
     runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Checkout leaderboard repo
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -26,7 +28,6 @@ jobs:
         run: |
           mkdir -p docs/docs/tutorials/leaderboard
           cp leaderboard/tutorials/*.mdx docs/docs/tutorials/leaderboard/
-          cp leaderboard/tutorials/_category_.json docs/docs/tutorials/leaderboard/
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
