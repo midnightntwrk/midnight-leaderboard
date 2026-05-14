@@ -74,8 +74,7 @@ export class LeaderboardAPI {
   }
 
   /** Deploy a new leaderboard contract (admin operation). */
-  static async deploy(providers: LeaderboardProviders, logger?: Logger): Promise<LeaderboardAPI> {
-    const secretKey = crypto.getRandomValues(new Uint8Array(32));
+  static async deploy(providers: LeaderboardProviders, secretKey: Uint8Array, logger?: Logger): Promise<LeaderboardAPI> {
     const deployedContract = await deployContract(providers as any, {
       compiledContract: CompiledLeaderboardContract,
       privateStateId: leaderboardPrivateStateKey,
@@ -88,9 +87,9 @@ export class LeaderboardAPI {
   static async join(
     providers: LeaderboardProviders,
     contractAddress: ContractAddress,
+    secretKey: Uint8Array,
     logger?: Logger,
   ): Promise<LeaderboardAPI> {
-    const secretKey = crypto.getRandomValues(new Uint8Array(32));
     const deployedContract = await findDeployedContract(providers as any, {
       contractAddress,
       compiledContract: CompiledLeaderboardContract,
