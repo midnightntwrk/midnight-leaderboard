@@ -17,7 +17,7 @@ import {
   type DeployedLeaderboardContract,
   leaderboardPrivateStateKey,
 } from './common-types.js';
-import { CompiledLeaderboardContract, type LeaderboardPrivateState } from '../../contract/src/index';
+import { CompiledLeaderboardContract, createLeaderboardPrivateState, type LeaderboardPrivateState } from '../../contract/src/index';
 import { setCustomName } from '../../contract/src/witnesses.js';
 import * as utils from './utils/index.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -75,10 +75,11 @@ export class LeaderboardAPI {
 
   /** Deploy a new leaderboard contract (admin operation). */
   static async deploy(providers: LeaderboardProviders, logger?: Logger): Promise<LeaderboardAPI> {
+    const secretKey = crypto.getRandomValues(new Uint8Array(32));
     const deployedContract = await deployContract(providers as any, {
       compiledContract: CompiledLeaderboardContract,
       privateStateId: leaderboardPrivateStateKey,
-      initialPrivateState: {} as LeaderboardPrivateState,
+      initialPrivateState: createLeaderboardPrivateState(secretKey),
     });
     return new LeaderboardAPI(deployedContract, providers, logger);
   }
@@ -89,11 +90,12 @@ export class LeaderboardAPI {
     contractAddress: ContractAddress,
     logger?: Logger,
   ): Promise<LeaderboardAPI> {
+    const secretKey = crypto.getRandomValues(new Uint8Array(32));
     const deployedContract = await findDeployedContract(providers as any, {
       contractAddress,
       compiledContract: CompiledLeaderboardContract,
       privateStateId: leaderboardPrivateStateKey,
-      initialPrivateState: {} as LeaderboardPrivateState,
+      initialPrivateState: createLeaderboardPrivateState(secretKey),
     });
     return new LeaderboardAPI(deployedContract, providers, logger);
   }

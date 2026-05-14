@@ -97,6 +97,16 @@ export default function App() {
   const [verifyingId, setVerifyingId] = useState<number | null>(null);
   const [verifiedIds, setVerifiedIds] = useState<Set<number>>(new Set());
 
+  const managerRef = useRef<BrowserLeaderboardManager | null>(null);
+
+  const getManager = useCallback(() => {
+    if (!managerRef.current) {
+      const logger = pino({ level: 'warn', browser: { asObject: true } });
+      managerRef.current = new BrowserLeaderboardManager(logger);
+    }
+    return managerRef.current;
+  }, []);
+
   const { entries: leaderboardEntries, refresh: refreshLeaderboard } = useLeaderboard(contractAddress || null);
   const leaderboard = leaderboardEntries.map((e, i) => ({
     rank: i + 1, id: e.id, displayName: e.displayName, score: BigInt(e.score),
@@ -142,13 +152,12 @@ export default function App() {
     setDeploying(true);
     setError(null);
     try {
-      const logger = pino({ level: 'warn', browser: { asObject: true } });
-      const manager = new BrowserLeaderboardManager(logger);
+      const manager = getManager();
       const deployment$ = manager.resolve();
       const result = await new Promise<any>((resolve, reject) => {
         const sub = deployment$.subscribe((d) => {
-          if (d.status === 'deployed') { sub.unsubscribe(); resolve(d); }
-          if (d.status === 'failed') { sub.unsubscribe(); reject(d.error); }
+          if (d.status === 'deployed') { Promise.resolve().then(() => sub.unsubscribe()); resolve(d); }
+          if (d.status === 'failed') { Promise.resolve().then(() => sub.unsubscribe()); reject(d.error); }
         });
       });
       setContractAddress(result.api.deployedContractAddress);
@@ -220,13 +229,12 @@ export default function App() {
     setSubmitStatus('Joining contract…');
     setError(null);
     try {
-      const logger = pino({ level: 'warn', browser: { asObject: true } });
-      const manager = new BrowserLeaderboardManager(logger);
+      const manager = getManager();
       const deployment$ = manager.resolve(contractAddress as any);
       const result = await new Promise<any>((resolve, reject) => {
         const sub = deployment$.subscribe((d) => {
-          if (d.status === 'deployed') { sub.unsubscribe(); resolve(d); }
-          if (d.status === 'failed') { sub.unsubscribe(); reject(d.error); }
+          if (d.status === 'deployed') { Promise.resolve().then(() => sub.unsubscribe()); resolve(d); }
+          if (d.status === 'failed') { Promise.resolve().then(() => sub.unsubscribe()); reject(d.error); }
         });
       });
       setSubmitStatus('Generating proof & submitting…');
@@ -250,13 +258,12 @@ export default function App() {
     setVerifyingId(entryId);
     setError(null);
     try {
-      const logger = pino({ level: 'warn', browser: { asObject: true } });
-      const manager = new BrowserLeaderboardManager(logger);
+      const manager = getManager();
       const deployment$ = manager.resolve(contractAddress as any);
       const result = await new Promise<any>((resolve, reject) => {
         const sub = deployment$.subscribe((d) => {
-          if (d.status === 'deployed') { sub.unsubscribe(); resolve(d); }
-          if (d.status === 'failed') { sub.unsubscribe(); reject(d.error); }
+          if (d.status === 'deployed') { Promise.resolve().then(() => sub.unsubscribe()); resolve(d); }
+          if (d.status === 'failed') { Promise.resolve().then(() => sub.unsubscribe()); reject(d.error); }
         });
       });
       await result.api.verifyOwnership(entryId);

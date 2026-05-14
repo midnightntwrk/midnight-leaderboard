@@ -1,7 +1,10 @@
-/**
- * Witness provider for the leaderboard contract.
- * Witnesses return [newPrivateState, value] tuples.
- */
+export type LeaderboardPrivateState = {
+  readonly secretKey: Uint8Array;
+};
+
+export const createLeaderboardPrivateState = (secretKey: Uint8Array): LeaderboardPrivateState => ({
+  secretKey,
+});
 
 let _customName = new Uint8Array(32);
 
@@ -11,5 +14,14 @@ export const setCustomName = (name: string): void => {
 };
 
 export const createWitnesses = () => ({
-  getCustomName: ({ privateState }: any) => [privateState, _customName],
+  localSecretKey: ({
+    privateState,
+  }: {
+    privateState: LeaderboardPrivateState;
+  }): [LeaderboardPrivateState, Uint8Array] => [privateState, privateState.secretKey],
+  getCustomName: ({
+    privateState,
+  }: {
+    privateState: LeaderboardPrivateState;
+  }): [LeaderboardPrivateState, Uint8Array] => [privateState, _customName],
 });

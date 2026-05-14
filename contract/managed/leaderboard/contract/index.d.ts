@@ -1,6 +1,7 @@
 import type * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
 
 export type Witnesses<PS> = {
+  localSecretKey(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
   getCustomName(context: __compactRuntime.WitnessContext<Ledger, PS>): [PS, Uint8Array];
 }
 
@@ -23,9 +24,11 @@ export type ProvableCircuits<PS> = {
 }
 
 export type PureCircuits = {
+  ownerCommitment(sk_0: Uint8Array): Uint8Array;
 }
 
 export type Circuits<PS> = {
+  ownerCommitment(context: __compactRuntime.CircuitContext<PS>, sk_0: Uint8Array): __compactRuntime.CircuitResults<PS, Uint8Array>;
   submitScore(context: __compactRuntime.CircuitContext<PS>,
               score_0: bigint,
               useCustomName_0: boolean): __compactRuntime.CircuitResults<PS, []>;

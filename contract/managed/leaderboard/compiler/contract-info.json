@@ -4,6 +4,24 @@
   "runtime-version": "0.16.0",
   "circuits": [
     {
+      "name": "ownerCommitment",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
       "name": "submitScore",
       "pure": false,
       "proof": true,
@@ -60,6 +78,15 @@
     }
   ],
   "witnesses": [
+    {
+      "name": "localSecretKey",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
     {
       "name": "getCustomName",
       "arguments": [
