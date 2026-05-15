@@ -11,7 +11,6 @@ export type ImpureCircuits<PS> = {
               useCustomName_0: boolean): __compactRuntime.CircuitResults<PS, []>;
   verifyOwnership(context: __compactRuntime.CircuitContext<PS>,
                   targetEntryId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  getEntryCount(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
 }
 
 export type ProvableCircuits<PS> = {
@@ -20,7 +19,6 @@ export type ProvableCircuits<PS> = {
               useCustomName_0: boolean): __compactRuntime.CircuitResults<PS, []>;
   verifyOwnership(context: __compactRuntime.CircuitContext<PS>,
                   targetEntryId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  getEntryCount(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
 }
 
 export type PureCircuits = {
@@ -34,7 +32,6 @@ export type Circuits<PS> = {
               useCustomName_0: boolean): __compactRuntime.CircuitResults<PS, []>;
   verifyOwnership(context: __compactRuntime.CircuitContext<PS>,
                   targetEntryId_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  getEntryCount(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
 }
 
 export type Ledger = {

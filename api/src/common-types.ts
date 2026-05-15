@@ -10,7 +10,7 @@ import { type LeaderboardPrivateState } from '../../contract/src/index';
 export const leaderboardPrivateStateKey = 'leaderboardPrivateState';
 export type PrivateStateId = typeof leaderboardPrivateStateKey;
 
-export type LeaderboardCircuitKeys = 'submitScore' | 'getEntryCount' | 'verifyOwnership';
+export type LeaderboardCircuitKeys = 'submitScore' | 'verifyOwnership';
 export type LeaderboardProviders = MidnightProviders<LeaderboardCircuitKeys, PrivateStateId, LeaderboardPrivateState>;
 export type DeployedLeaderboardContract = FoundContract<any>;
 

@@ -78,8 +78,3 @@ export circuit verifyOwnership(targetEntryId: Uint<64>): [] {
   const callerHash = ownerCommitment(localSecretKey());
   assert(callerHash == entry.ownerHash, "not the owner");
 }
-
-/** Get total number of entries on the leaderboard. */
-export circuit getEntryCount(): Uint<64> {
-  return nextId.read() as Uint<64>;
-}

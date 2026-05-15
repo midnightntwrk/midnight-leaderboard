@@ -168,40 +168,15 @@ export class Contract {
                                                  targetEntryId_0);
         partialProofData.output = { value: [], alignment: [] };
         return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
-      },
-      getEntryCount: (...args_1) => {
-        if (args_1.length !== 1) {
-          throw new __compactRuntime.CompactError(`getEntryCount: expected 1 argument (as invoked from Typescript), received ${args_1.length}`);
-        }
-        const contextOrig_0 = args_1[0];
-        if (!(typeof(contextOrig_0) === 'object' && contextOrig_0.currentQueryContext != undefined)) {
-          __compactRuntime.typeError('getEntryCount',
-                                     'argument 1 (as invoked from Typescript)',
-                                     'leaderboard.compact line 83 char 1',
-                                     'CircuitContext',
-                                     contextOrig_0)
-        }
-        const context = { ...contextOrig_0, gasCost: __compactRuntime.emptyRunningCost() };
-        const partialProofData = {
-          input: { value: [], alignment: [] },
-          output: undefined,
-          publicTranscript: [],
-          privateTranscriptOutputs: []
-        };
-        const result_0 = this._getEntryCount_0(context, partialProofData);
-        partialProofData.output = { value: _descriptor_0.toValue(result_0), alignment: _descriptor_0.alignment() };
-        return { result: result_0, context: context, proofData: partialProofData, gasCost: context.gasCost };
       }
     };
     this.impureCircuits = {
       submitScore: this.circuits.submitScore,
-      verifyOwnership: this.circuits.verifyOwnership,
-      getEntryCount: this.circuits.getEntryCount
+      verifyOwnership: this.circuits.verifyOwnership
     };
     this.provableCircuits = {
       submitScore: this.circuits.submitScore,
-      verifyOwnership: this.circuits.verifyOwnership,
-      getEntryCount: this.circuits.getEntryCount
+      verifyOwnership: this.circuits.verifyOwnership
     };
   }
   initialState(...args_0) {
@@ -228,7 +203,6 @@ export class Contract {
     state_0.data = new __compactRuntime.ChargedState(stateValue_0);
     state_0.setOperation('submitScore', new __compactRuntime.ContractOperation());
     state_0.setOperation('verifyOwnership', new __compactRuntime.ContractOperation());
-    state_0.setOperation('getEntryCount', new __compactRuntime.ContractOperation());
     const context = __compactRuntime.createCircuitContext(__compactRuntime.dummyContractAddress(), constructorContext_0.initialZswapLocalState.coinPublicKey, state_0.data, constructorContext_0.initialPrivateState);
     const partialProofData = {
       input: { value: [], alignment: [] },
@@ -428,20 +402,6 @@ export class Contract {
     __compactRuntime.assert(this._equal_0(callerHash_0, entry_0.ownerHash),
                             'not the owner');
     return [];
-  }
-  _getEntryCount_0(context, partialProofData) {
-    return _descriptor_0.fromValue(__compactRuntime.queryLedgerState(context,
-                                                                     partialProofData,
-                                                                     [
-                                                                      { dup: { n: 0 } },
-                                                                      { idx: { cached: false,
-                                                                               pushPath: false,
-                                                                               path: [
-                                                                                      { tag: 'value',
-                                                                                        value: { value: _descriptor_9.toValue(1n),
-                                                                                                 alignment: _descriptor_9.alignment() } }] } },
-                                                                      { popeq: { cached: true,
-                                                                                 result: undefined } }]).value);
   }
   _equal_0(x0, y0) {
     if (!x0.every((x, i) => y0[i] === x)) { return false; }
