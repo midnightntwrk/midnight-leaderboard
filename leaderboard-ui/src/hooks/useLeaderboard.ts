@@ -11,7 +11,7 @@ import { ContractState } from '@midnight-ntwrk/compact-runtime';
 import { Leaderboard } from 'leaderboard-contract';
 import { decodeDisplayName } from '../../../api/src/utils/index.js';
 
-const INDEXER_URL = import.meta.env.VITE_INDEXER_URL ?? 'https://indexer.preprod.midnight.network/api/v3/graphql';
+const INDEXER_URL = import.meta.env.VITE_INDEXER_URL ?? 'https://indexer.preprod.midnight.network/api/v4/graphql';
 
 const CONTRACT_STATE_QUERY = `
   query ContractState($address: HexEncoded!) {
