@@ -69,10 +69,11 @@
     { "op": "constrain_bits", "var": 18, "bits": 8 },
     { "op": "private_input", "guard": null },
     { "op": "constrain_bits", "var": 19, "bits": 248 },
-    { "op": "persistent_hash", "alignment": [{ "tag": "atom", "value": { "length": 32, "tag": "bytes" } }], "inputs": [18, 19] },
-    { "op": "test_eq", "a": 20, "b": 13 },
-    { "op": "test_eq", "a": 21, "b": 14 },
-    { "op": "cond_select", "bit": 22, "a": 23, "b": 4 },
-    { "op": "assert", "cond": 24 }
+    { "op": "load_imm", "imm": "6C6561646572626F6172643A6F776E65723A" },
+    { "op": "persistent_hash", "alignment": [{ "tag": "atom", "value": { "length": 32, "tag": "bytes" } }, { "tag": "atom", "value": { "length": 32, "tag": "bytes" } }], "inputs": [4, 20, 18, 19] },
+    { "op": "test_eq", "a": 21, "b": 13 },
+    { "op": "test_eq", "a": 22, "b": 14 },
+    { "op": "cond_select", "bit": 23, "a": 24, "b": 4 },
+    { "op": "assert", "cond": 25 }
   ]
 }

@@ -44,14 +44,26 @@ export class BrowserLeaderboardManager {
     );
     if (existing) return existing;
 
+    const secretKey = this.getSecretKey();
     const deployment = new BehaviorSubject<LeaderboardDeployment>({ status: 'in-progress' });
     if (contractAddress) {
-      void this.run(deployment, (providers) => LeaderboardAPI.join(providers, contractAddress, this.logger));
+      void this.run(deployment, (providers) => LeaderboardAPI.join(providers, contractAddress, secretKey, this.logger));
     } else {
-      void this.run(deployment, (providers) => LeaderboardAPI.deploy(providers, this.logger));
+      void this.run(deployment, (providers) => LeaderboardAPI.deploy(providers, secretKey, this.logger));
     }
     this.#deploymentsSubject.next([...deployments, deployment]);
     return deployment;
+  }
+
+  private getSecretKey(): Uint8Array {
+    const storageKey = 'midnight-leaderboard-secret';
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      return Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
+    }
+    const secret = crypto.getRandomValues(new Uint8Array(32));
+    localStorage.setItem(storageKey, btoa(String.fromCharCode(...secret)));
+    return secret;
   }
 
   private getProviders(): Promise<LeaderboardProviders> {

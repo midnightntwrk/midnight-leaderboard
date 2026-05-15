@@ -4,6 +4,24 @@
   "runtime-version": "0.16.0",
   "circuits": [
     {
+      "name": "ownerCommitment",
+      "pure": true,
+      "proof": false,
+      "arguments": [
+        {
+          "name": "sk",
+          "type": {
+            "type-name": "Bytes",
+            "length": 32
+          }
+        }
+      ],
+      "result-type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
+    {
       "name": "submitScore",
       "pure": false,
       "proof": true,
@@ -46,20 +64,18 @@
         "types": [
         ]
       }
-    },
-    {
-      "name": "getEntryCount",
-      "pure": false,
-      "proof": true,
-      "arguments": [
-      ],
-      "result-type": {
-        "type-name": "Uint",
-        "maxval": 18446744073709551615
-      }
     }
   ],
   "witnesses": [
+    {
+      "name": "localSecretKey",
+      "arguments": [
+      ],
+      "result type": {
+        "type-name": "Bytes",
+        "length": 32
+      }
+    },
     {
       "name": "getCustomName",
       "arguments": [
