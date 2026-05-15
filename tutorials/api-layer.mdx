@@ -15,17 +15,27 @@ You create the TypeScript layer that bridges the compiled Compact contract to ap
 
 ## Contract package: witnesses and exports
 
+The contract package needs two TypeScript files that wire the compiled Compact bindings to your application code.
+
 ### Witness provider
 
-Create the witness file that provides the `getCustomName` function to the contract at runtime.
+Create the witness file that provides `localSecretKey` and `getCustomName` to the contract at runtime.
 
 ```bash
 touch contract/src/witnesses.ts
 ```
 
-This provides the `getCustomName` witness that the contract calls when a player submits with a custom display name. Witnesses return a `[newPrivateState, value]` tuple.
+The `localSecretKey` witness returns the user's secret key from private state. The `getCustomName` witness returns a custom display name. Both return a `[newPrivateState, value]` tuple.
 
 ```typescript
+export type LeaderboardPrivateState = {
+  readonly secretKey: Uint8Array;
+};
+
+export const createLeaderboardPrivateState = (secretKey: Uint8Array): LeaderboardPrivateState => ({
+  secretKey,
+});
+
 let _customName = new Uint8Array(32);
 
 export const setCustomName = (name: string): void => {
@@ -34,7 +44,16 @@ export const setCustomName = (name: string): void => {
 };
 
 export const createWitnesses = () => ({
-  getCustomName: ({ privateState }: any) => [privateState, _customName],
+  localSecretKey: ({
+    privateState,
+  }: {
+    privateState: LeaderboardPrivateState;
+  }): [LeaderboardPrivateState, Uint8Array] => [privateState, privateState.secretKey],
+  getCustomName: ({
+    privateState,
+  }: {
+    privateState: LeaderboardPrivateState;
+  }): [LeaderboardPrivateState, Uint8Array] => [privateState, _customName],
 });
 ```
 
@@ -52,12 +71,11 @@ The key export is `CompiledLeaderboardContract`, which combines the contract def
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 
 export * as Leaderboard from '../managed/leaderboard/contract/index.js';
-export { createWitnesses, setCustomName } from './witnesses.js';
+export { createWitnesses, setCustomName, createLeaderboardPrivateState } from './witnesses.js';
+export type { LeaderboardPrivateState } from './witnesses.js';
 
 import * as LeaderboardContract from '../managed/leaderboard/contract/index.js';
 import { createWitnesses } from './witnesses.js';
-
-export type LeaderboardPrivateState = Record<string, unknown>;
 
 export const CompiledLeaderboardContract = CompiledContract.make(
   'leaderboard',
@@ -122,11 +140,13 @@ touch api/tsconfig.json
 }
 ```
 
-The build configuration extends the base and excludes test files from compilation.
+Create the build configuration for the API package.
 
 ```bash
 touch api/tsconfig.build.json
 ```
+
+The build configuration extends the base and excludes test files from the production build.
 
 ```json
 {
@@ -153,7 +173,7 @@ import { type LeaderboardPrivateState } from '../../contract/src/index';
 export const leaderboardPrivateStateKey = 'leaderboardPrivateState';
 export type PrivateStateId = typeof leaderboardPrivateStateKey;
 
-export type LeaderboardCircuitKeys = 'submitScore' | 'getEntryCount' | 'verifyOwnership';
+export type LeaderboardCircuitKeys = 'submitScore' | 'verifyOwnership';
 export type LeaderboardProviders = MidnightProviders<LeaderboardCircuitKeys, PrivateStateId, LeaderboardPrivateState>;
 export type DeployedLeaderboardContract = FoundContract<any>;
 
@@ -171,6 +191,8 @@ export interface LeaderboardDerivedState {
 ```
 
 ### Display name decoder
+
+Create the utility that converts raw ledger bytes into human-readable display names.
 
 ```bash
 touch api/src/utils/index.ts
@@ -205,11 +227,13 @@ export const decodeDisplayName = (bytes: Uint8Array, entryId: number, score: num
 
 ### LeaderboardAPI class
 
+Create the main API file. The `LeaderboardAPI` class wraps `deployContract` and `findDeployedContract` from `midnight-js-contracts` into a single entry point for all contract operations.
+
 ```bash
 touch api/src/index.ts
 ```
 
-This wraps `deployContract` and `findDeployedContract` from `midnight-js-contracts`. The `submitScore` method conditionally calls `setCustomName` before the transaction. The `!!customName` expression converts the presence of a name into the boolean the contract expects.
+The `submitScore` method conditionally calls `setCustomName` before the transaction. The `!!customName` expression converts the presence of a name into the boolean the contract expects. The `deploy` and `join` methods accept a `secretKey` from the caller rather than generating their own. This lets the browser layer persist the secret across page refreshes.
 
 ```typescript
 import * as Leaderboard from '../../contract/managed/leaderboard/contract/index.js';
@@ -222,7 +246,7 @@ import {
   type DeployedLeaderboardContract,
   leaderboardPrivateStateKey,
 } from './common-types.js';
-import { CompiledLeaderboardContract, type LeaderboardPrivateState } from '../../contract/src/index';
+import { CompiledLeaderboardContract, createLeaderboardPrivateState, type LeaderboardPrivateState } from '../../contract/src/index';
 import { setCustomName } from '../../contract/src/witnesses.js';
 import * as utils from './utils/index.js';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
@@ -269,21 +293,21 @@ export class LeaderboardAPI {
     await (this.deployedContract as any).callTx.verifyOwnership(BigInt(entryId));
   }
 
-  static async deploy(providers: LeaderboardProviders, logger?: Logger): Promise<LeaderboardAPI> {
+  static async deploy(providers: LeaderboardProviders, secretKey: Uint8Array, logger?: Logger): Promise<LeaderboardAPI> {
     const deployedContract = await deployContract(providers as any, {
       compiledContract: CompiledLeaderboardContract,
       privateStateId: leaderboardPrivateStateKey,
-      initialPrivateState: {} as LeaderboardPrivateState,
+      initialPrivateState: createLeaderboardPrivateState(secretKey),
     });
     return new LeaderboardAPI(deployedContract, providers, logger);
   }
 
-  static async join(providers: LeaderboardProviders, contractAddress: ContractAddress, logger?: Logger): Promise<LeaderboardAPI> {
+  static async join(providers: LeaderboardProviders, contractAddress: ContractAddress, secretKey: Uint8Array, logger?: Logger): Promise<LeaderboardAPI> {
     const deployedContract = await findDeployedContract(providers as any, {
       contractAddress,
       compiledContract: CompiledLeaderboardContract,
       privateStateId: leaderboardPrivateStateKey,
-      initialPrivateState: {} as LeaderboardPrivateState,
+      initialPrivateState: createLeaderboardPrivateState(secretKey),
     });
     return new LeaderboardAPI(deployedContract, providers, logger);
   }

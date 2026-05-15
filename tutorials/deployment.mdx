@@ -17,7 +17,7 @@ In this section, you deploy the leaderboard DApp to production using Vercel for 
 
 The Midnight proof server generates zero-knowledge proofs for contract circuit transactions. In local development, it runs in Docker on `localhost:6300`. In production, browser JavaScript cannot reach Midnight's public proof server directly because it does not serve CORS headers.
 
-The wallet handles its own proving (for DUST fees and transaction balancing) through whatever proof server you configured in Lace. Your proof server only handles contract-specific circuit proofs (submitScore, verifyOwnership).
+The wallet handles its own proving (for DUST fees and transaction balancing) through whatever proof server you configured in Lace. Your proof server only handles contract-specific circuit proofs (`submitScore`, `verifyOwnership`).
 
 ## Proof server (Railway)
 
@@ -80,13 +80,15 @@ The `leaderboard-ui` build script runs `vite build --mode preprod`, which loads 
 
 ```bash
 VITE_NETWORK_ID=preprod
-VITE_INDEXER_URL=https://indexer.preprod.midnight.network/api/v3/graphql
-VITE_INDEXER_WS_URL=wss://indexer.preprod.midnight.network/api/v3/graphql/ws
+VITE_INDEXER_URL=https://indexer.preprod.midnight.network/api/v4/graphql
+VITE_INDEXER_WS_URL=wss://indexer.preprod.midnight.network/api/v4/graphql/ws
 VITE_DEFAULT_CONTRACT=<your deployed contract address>
 VITE_PROOF_SERVER_URL=https://your-app.up.railway.app
 ```
 
 ### Deploy to Vercel
+
+Import the repository and deploy it from the Vercel dashboard.
 
 1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
 2. Click **Add New Project** and import your repository
@@ -98,6 +100,8 @@ VITE_PROOF_SERVER_URL=https://your-app.up.railway.app
 Visit your Vercel URL in Chrome with Lace installed. The leaderboard loads from the indexer. Connect your wallet and submit a score to verify the full pipeline: browser to proof server (Railway) to wallet (Lace) to chain (Midnight Preprod).
 
 ## Summary
+
+The production stack uses two paid services alongside the free Midnight Preprod network.
 
 | Component | Service | Cost |
 |-----------|---------|------|

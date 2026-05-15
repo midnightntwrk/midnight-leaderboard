@@ -17,32 +17,57 @@ By the end, you have a working arcade-style leaderboard where players submit sco
 
 ## What you learn
 
-**Smart contract (Compact):** defining structured on-chain data with `Map`, `Counter`, and custom structs; controlling what data goes on-chain with `disclose()`; using witnesses to feed private data into ZK circuits on demand; using `assert` to enforce ownership checks; hashing with `persistentHash` for anonymous identity.
+This tutorial covers four areas of Midnight DApp development.
 
-**TypeScript integration:** compiling Compact contracts and working with the generated TypeScript bindings; building a platform-agnostic API layer with `midnight-js-contracts`; creating witness providers that bridge private data into the circuit.
+### Smart contract (Compact)
 
-**Browser DApp:** connecting to the Lace wallet via the DApp Connector API; initializing providers (proof, indexer, wallet, ZK config); reading on-chain state directly from the indexer without a wallet; submitting transactions through the browser with ZK proof generation.
+- Define structured on-chain data with `Map`, `Counter`, and custom structs.
+- Control what data goes on-chain with `disclose()`.
+- Use witnesses to feed private data into ZK circuits on demand.
+- Use `assert` to enforce ownership checks.
+- Hash with `persistentHash` for anonymous identity.
 
-**Production deployment:** deploying the frontend to Vercel; running a proof server on Railway for CORS-safe proving; configuring environment variables for different networks.
+### TypeScript integration
+
+- Compile Compact contracts and work with the generated TypeScript bindings.
+- Build a platform-agnostic API layer with `midnight-js-contracts`.
+- Create witness providers that bridge private data into the circuit.
+
+### Browser DApp
+
+- Connect to the Lace wallet via the DApp Connector API.
+- Initialize providers for proof generation, indexer access, wallet operations, and ZK config.
+- Read on-chain state directly from the indexer without a wallet.
+- Submit transactions through the browser with ZK proof generation.
+
+### Production deployment
+
+- Deploy the frontend to Vercel.
+- Run a proof server on Railway for CORS-safe proving.
+- Configure environment variables for different networks.
 
 ## Prerequisites
 
-**Required:**
-- [Node.js v22+](https://nodejs.org/) (use `nvm install 22` if needed)
-- [Compact toolchain](https://docs.midnight.network/getting-started/installation#install-compact) (compiler version 0.31.0)
-- [Docker](https://docs.docker.com/desktop/) (for the local proof server)
-- [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension
+You need the following tools installed before starting.
 
-**Wallet setup:**
-1. Install the Lace extension and create a new wallet
-2. Set the network to **Preprod**
-3. Set the proof server to `http://localhost:6300`
-4. Fund your wallet with tNIGHT from the [Preprod faucet](https://faucet.preprod.midnight.network/)
-5. Go to Tokens, click **Generate tDUST**, and confirm the transaction
+- [Node.js v22+](https://nodejs.org/) (use `nvm install 22` if needed).
+- [Compact toolchain](https://docs.midnight.network/getting-started/installation#install-compact) (compiler version 0.31.0).
+- [Docker](https://docs.docker.com/desktop/) (for the local proof server).
+- [Lace wallet](https://chromewebstore.google.com/detail/lace/gafhhkghbfjjkeiendhlofajokpaflmk) browser extension.
+
+### Wallet setup
+
+1. Install the Lace extension and create a new wallet.
+2. Set the network to **Preprod**.
+3. Set the proof server to `http://localhost:6300`.
+4. Fund your wallet with tNIGHT from the [Preprod faucet](https://faucet.preprod.midnight.network/).
+5. Go to Tokens, click **Generate tDUST**, and confirm the transaction.
 
 > **Note:** tDUST is required to pay transaction fees on Preprod. It is generated from your tNIGHT balance.
 
 ## Project structure
+
+The finished project has three workspace packages and a Docker configuration for the proof server.
 
 ```text
 midnight-leaderboard/
@@ -71,12 +96,14 @@ midnight-leaderboard/
 
 ## Tutorial sections
 
+Each part builds on the previous one. Complete them in order.
+
 | Section | What you build |
 |---------|---------------|
-| [Part 1: Smart contract](./smart-contract.mdx) | Write the Compact contract with privacy modes and ownership verification |
-| [Part 2: TypeScript integration](./api-layer.mdx) | Set up the contract package, witnesses, and shared API layer |
-| [Part 3: Browser DApp](./browser-dapp.mdx) | Build the React frontend with Lace wallet and indexer reads |
-| [Part 4: Production deployment](./deployment.mdx) | Deploy to Vercel (frontend) and Railway (proof server) |
+| [Part 1: Smart contract](./smart-contract.mdx) | Write the Compact contract with privacy modes and ownership verification. |
+| [Part 2: TypeScript integration](./api-layer.mdx) | Set up the contract package, witnesses, and shared API layer. |
+| [Part 3: Browser DApp](./browser-dapp.mdx) | Build the React frontend with Lace wallet and indexer reads. |
+| [Part 4: Production deployment](./deployment.mdx) | Deploy to Vercel (frontend) and Railway (proof server). |
 
 ## Compatibility
 

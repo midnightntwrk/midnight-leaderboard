@@ -15,6 +15,8 @@ In this section, you write the Compact smart contract that powers the leaderboar
 
 ## Initialize the project
 
+Create the project directory, then set up the root `package.json` with workspace configuration and Midnight SDK dependencies.
+
 ```bash
 mkdir midnight-leaderboard
 cd midnight-leaderboard
@@ -136,7 +138,7 @@ touch contract/leaderboard.compact
 
 The contract defines a `ScoreEntry` struct stored in a `Map` keyed by an auto-incrementing counter. A `witness` function lets the frontend feed private data into the circuit on demand.
 
-```typescript
+```compact
 pragma language_version >= 0.23;
 
 import CompactStandardLibrary;
@@ -150,20 +152,33 @@ struct ScoreEntry {
 export ledger scores: Map<Uint<64>, ScoreEntry>;
 export ledger nextId: Counter;
 
+witness localSecretKey(): Bytes<32>;
 witness getCustomName(): Bytes<32>;
 ```
 
-`scores` is the public ledger readable from the indexer. `nextId` auto-increments to assign unique entry IDs. The `witness` declaration tells the compiler that the TypeScript host provides `getCustomName` at runtime.
+`scores` is the public ledger readable from the indexer. `nextId` auto-increments to assign unique entry IDs. The two `witness` declarations tell the compiler that the TypeScript host provides `localSecretKey` and `getCustomName` at runtime. `localSecretKey` returns a random secret stored in the user's private state. `getCustomName` returns a custom display name.
+
+### ownerCommitment
+
+This helper circuit derives an on-chain identity from the user's secret key. It hashes the secret with a domain separator using `persistentHash`, producing a deterministic commitment that can be stored on the ledger and verified later without revealing the secret.
+
+```compact
+export circuit ownerCommitment(sk: Bytes<32>): Bytes<32> {
+  return persistentHash<Vector<2, Bytes<32>>>([pad(32, "leaderboard:owner:"), sk]);
+}
+```
 
 ### submitScore
 
-```typescript
+The main circuit creates a new leaderboard entry with the caller's score, display name, and owner commitment.
+
+```compact
 export circuit submitScore(
   score: Uint<64>,
   useCustomName: Boolean
 ): [] {
-  const userPublicKey = ownPublicKey();
-  const ownerHash = persistentHash<Bytes<32>>(userPublicKey.bytes);
+  const sk = localSecretKey();
+  const ownerHash = ownerCommitment(sk);
 
   nextId.increment(1);
   const entryId = disclose(nextId.read() as Uint<64>);
@@ -178,41 +193,35 @@ export circuit submitScore(
   } else {
     scores.insert(entryId, ScoreEntry {
       score: disclose(score),
-      displayName: disclose(persistentHash<Bytes<32>>(userPublicKey.bytes)),
+      displayName: disclose(persistentHash<Bytes<32>>(sk)),
       ownerHash: disclose(ownerHash)
     });
   }
 }
 ```
 
-`ownPublicKey()` returns the caller's public key, only visible inside the circuit. It never appears on-chain unless explicitly disclosed.
+`localSecretKey()` calls the witness to retrieve the user's secret from private state. The secret never leaves the user's machine and never appears on-chain.
 
-`persistentHash` runs a Poseidon hash. The result is stored as `Bytes<32>` instead of `Field` to avoid overflow issues with the BLS12-381 scalar field.
+`ownerCommitment(sk)` hashes the secret with a domain separator to produce a deterministic identity. The domain separator `"leaderboard:owner:"` ensures this hash cannot collide with hashes used for other purposes.
 
-`disclose()` moves data from private (inside the circuit) to public (on-chain). Every value in a ledger write must be disclosed.
+`disclose()` marks data as safe to store publicly on-chain. Every value in a ledger write must be disclosed.
 
-The `if/else` branch controls what gets stored as the display name. When `useCustomName` is true, the contract calls the `getCustomName()` witness to retrieve a name from the TypeScript host. The application layer uses this for both custom-named and public-address submissions, deciding which value to feed through the witness. When `useCustomName` is false, the contract does not invoke a witness and sets the display name to `persistentHash(publicKey)`. This produces raw hash bytes that the UI renders as a generated name like "Crimson Tiger."
+The `if/else` branch controls what gets stored as the display name. When `useCustomName` is true, the contract calls the `getCustomName()` witness to retrieve a name from the TypeScript host. The application layer uses this for both custom-named and public-address submissions, deciding which value to feed through the witness. When `useCustomName` is false, the contract does not invoke a witness and sets the display name to `persistentHash(sk)`. This produces raw hash bytes that the UI renders as a generated name like "Crimson Tiger."
 
 ### verifyOwnership
 
-```typescript
+The verification circuit lets a user prove they own a leaderboard entry without revealing their secret key.
+
+```compact
 export circuit verifyOwnership(targetEntryId: Uint<64>): [] {
   assert(scores.member(disclose(targetEntryId)), "entry not found");
   const entry = scores.lookup(disclose(targetEntryId));
-  const callerHash = persistentHash<Bytes<32>>(ownPublicKey().bytes);
+  const callerHash = ownerCommitment(localSecretKey());
   assert(callerHash == entry.ownerHash, "not the owner");
 }
 ```
 
-The caller proves that `hash(theirPublicKey) == entry.ownerHash` without revealing the public key itself. The prover generates the proof locally. You can use it to claim a prize, verify identity, or present to a badge system. It does not write anything to the ledger.
-
-### getEntryCount
-
-```typescript
-export circuit getEntryCount(): Uint<64> {
-  return nextId.read() as Uint<64>;
-}
-```
+The caller proves that `ownerCommitment(theirSecretKey)` matches the `ownerHash` stored in the entry. The secret key never leaves the user's machine. The prover generates the proof locally. You can use it to claim a prize, verify identity, or present to a badge system. It does not write anything to the ledger.
 
 ## Compile the contract
 
@@ -226,8 +235,7 @@ npm run compile
 Expected output:
 
 ```text
-Compiling 3 circuits:
-  circuit "getEntryCount" (k=6, rows=26)
+Compiling 2 circuits:
   circuit "submitScore" (k=13, rows=4720)
   circuit "verifyOwnership" (k=13, rows=2352)
 ```
