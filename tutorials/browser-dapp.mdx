@@ -15,6 +15,8 @@ In this section, you build a React frontend that connects to the Lace wallet and
 
 ## Set up the UI package
 
+Create the UI workspace directory structure and its `package.json`.
+
 ```bash
 mkdir -p leaderboard-ui/src/contexts leaderboard-ui/src/hooks
 touch leaderboard-ui/package.json
@@ -74,6 +76,8 @@ The Midnight SDK uses WebAssembly modules for cryptographic operations. Vite nee
 ```bash
 touch leaderboard-ui/vite.config.ts
 ```
+
+The Vite configuration enables WebAssembly support, sets up the WASM module resolver for the Midnight runtime, and configures the development server on port 3000.
 
 ```typescript
 import { defineConfig } from 'vite';
@@ -175,7 +179,7 @@ This configuration targets ES2022 with React JSX transform enabled.
 
 ## Environment variables
 
-Create the local development environment file. `VITE_PROOF_SERVER_URL` points to the local Docker proof server. Leave `VITE_DEFAULT_CONTRACT` empty until you deploy a contract in a later step.
+Create the local development environment file. Leave `VITE_DEFAULT_CONTRACT` empty until you deploy a contract in a later step.
 
 ```bash
 touch leaderboard-ui/.env
@@ -185,10 +189,9 @@ Vite loads these variables at build time. Any variable prefixed with `VITE_` is 
 
 ```bash
 VITE_NETWORK_ID=preprod
-VITE_INDEXER_URL=https://indexer.preprod.midnight.network/api/v3/graphql
-VITE_INDEXER_WS_URL=wss://indexer.preprod.midnight.network/api/v3/graphql/ws
+VITE_INDEXER_URL=https://indexer.preprod.midnight.network/api/v4/graphql
+VITE_INDEXER_WS_URL=wss://indexer.preprod.midnight.network/api/v4/graphql/ws
 VITE_DEFAULT_CONTRACT=
-VITE_PROOF_SERVER_URL=http://localhost:6300
 ```
 
 ## HTML entry point
@@ -225,6 +228,8 @@ touch leaderboard-ui/src/main.tsx
 touch leaderboard-ui/src/App.css
 ```
 
+The entry point polyfills `Buffer` into the global scope, then mounts the React application.
+
 ```typescript
 import { Buffer } from 'buffer';
 (globalThis as any).Buffer = Buffer;
@@ -248,6 +253,8 @@ The `midnight-js-contracts` library requires a `PrivateStateProvider`. In the br
 ```bash
 touch leaderboard-ui/src/in-memory-private-state-provider.ts
 ```
+
+The provider stores private state and signing keys in memory, scoped by contract address. It implements the full `PrivateStateProvider` interface including import and export operations.
 
 ```typescript
 import type { ContractAddress, SigningKey } from '@midnight-ntwrk/compact-runtime';
@@ -379,13 +386,15 @@ This hook queries the Midnight indexer directly via GraphQL, deserializes the co
 touch leaderboard-ui/src/hooks/useLeaderboard.ts
 ```
 
+The hook fetches contract state from the indexer, deserializes it using the compiled contract's `ledger()` function, and returns a sorted list of entries.
+
 ```typescript
 import { useState, useEffect, useCallback } from 'react';
 import { ContractState } from '@midnight-ntwrk/compact-runtime';
 import { Leaderboard } from 'leaderboard-contract';
 import { decodeDisplayName } from '../../../api/src/utils/index.js';
 
-const INDEXER_URL = import.meta.env.VITE_INDEXER_URL ?? 'https://indexer.preprod.midnight.network/api/v3/graphql';
+const INDEXER_URL = import.meta.env.VITE_INDEXER_URL ?? 'https://indexer.preprod.midnight.network/api/v4/graphql';
 
 const CONTRACT_STATE_QUERY = `
   query ContractState($address: HexEncoded!) {
@@ -468,6 +477,8 @@ export function useLeaderboard(contractAddress: string | null, refreshInterval =
 
 The `BrowserLeaderboardManager` connects to the Lace wallet via the DApp Connector API, initializes all providers, and delegates contract operations to the `LeaderboardAPI`.
 
+The manager generates a random 32-byte secret key on first use and stores it in `localStorage`. On subsequent visits, it retrieves the same key. This ensures that ownership verification works even after the page is refreshed or the browser is restarted.
+
 The `walletProvider.balanceTx` method bridges the DApp and your wallet. The DApp builds an unbalanced transaction with the contract circuit proof and sends it to Lace for balancing. Lace adds DUST fees and Zswap proofs, then returns a finalized transaction ready to submit.
 
 Call `setNetworkId()` before initializing any providers.
@@ -475,6 +486,8 @@ Call `setNetworkId()` before initializing any providers.
 ```bash
 touch leaderboard-ui/src/contexts/BrowserLeaderboardManager.ts
 ```
+
+The manager class handles wallet connection, provider initialization, secret key persistence, and contract deployment or joining.
 
 ```typescript
 import { LeaderboardAPI, type LeaderboardCircuitKeys, type LeaderboardProviders } from '../../../api/src/index';
@@ -512,14 +525,26 @@ export class BrowserLeaderboardManager {
       (d) => d.value.status === 'deployed' && d.value.api.deployedContractAddress === contractAddress,
     );
     if (existing) return existing;
+    const secretKey = this.getSecretKey();
     const deployment = new BehaviorSubject<LeaderboardDeployment>({ status: 'in-progress' });
     if (contractAddress) {
-      void this.run(deployment, (providers) => LeaderboardAPI.join(providers, contractAddress, this.logger));
+      void this.run(deployment, (providers) => LeaderboardAPI.join(providers, contractAddress, secretKey, this.logger));
     } else {
-      void this.run(deployment, (providers) => LeaderboardAPI.deploy(providers, this.logger));
+      void this.run(deployment, (providers) => LeaderboardAPI.deploy(providers, secretKey, this.logger));
     }
     this.#deploymentsSubject.next([...deployments, deployment]);
     return deployment;
+  }
+
+  private getSecretKey(): Uint8Array {
+    const storageKey = 'midnight-leaderboard-secret';
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      return Uint8Array.from(atob(stored), (c) => c.charCodeAt(0));
+    }
+    const secret = crypto.getRandomValues(new Uint8Array(32));
+    localStorage.setItem(storageKey, btoa(String.fromCharCode(...secret)));
+    return secret;
   }
 
   private getProviders(): Promise<LeaderboardProviders> {
@@ -552,8 +577,7 @@ const initializeProviders = async (logger: Logger): Promise<LeaderboardProviders
   setNetworkId(networkId);
   const connectedAPI = await connectToWallet(logger, networkId);
   const config = await connectedAPI.getConfiguration();
-  const rawProofUri = import.meta.env.VITE_PROOF_SERVER_URL ?? config.proverServerUri!;
-  const proofServerUri = rawProofUri.startsWith('/') ? `${window.location.origin}${rawProofUri}` : rawProofUri;
+  const proofServerUri = config.proverServerUri!;
   const shieldedAddresses = await connectedAPI.getShieldedAddresses();
   const zkConfigProvider = new FetchZkConfigProvider<LeaderboardCircuitKeys>(window.location.origin, fetch.bind(window));
 
@@ -609,11 +633,13 @@ The `App.tsx` component ties everything together: wallet detection, the click ch
 
 The three UI privacy modes map to two contract paths. Anonymous sends `undefined` as the custom name, triggering the contract's `else` branch which stores a hash as the display name. Public and Custom both send a string through the witness (the wallet address or a user-typed name), triggering the contract's `if` branch.
 
-Ownership verification calls `verifyOwnership` on the API and tracks verified entries in local React state. If the caller is not the owner, the contract's `assert` fails and the network rejects the transaction.
+Ownership verification calls `verifyOwnership` on the API and tracks verified entries in local React state. If the caller is not the owner, then the contract's `assert` fails and the network rejects the transaction.
 
 ```bash
 touch leaderboard-ui/src/App.tsx
 ```
+
+The component uses a shared `BrowserLeaderboardManager` instance via `useRef` to ensure the same secret key and providers are used across all contract operations within a session.
 
 ```tsx
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -685,6 +711,16 @@ export default function App() {
   const [verifyingId, setVerifyingId] = useState<number | null>(null);
   const [verifiedIds, setVerifiedIds] = useState<Set<number>>(new Set());
 
+  const managerRef = useRef<BrowserLeaderboardManager | null>(null);
+
+  const getManager = useCallback(() => {
+    if (!managerRef.current) {
+      const logger = pino({ level: 'warn', browser: { asObject: true } });
+      managerRef.current = new BrowserLeaderboardManager(logger);
+    }
+    return managerRef.current;
+  }, []);
+
   const { entries: leaderboardEntries, refresh: refreshLeaderboard } = useLeaderboard(contractAddress || null);
   const leaderboard = leaderboardEntries.map((e, i) => ({
     rank: i + 1, id: e.id, displayName: e.displayName, score: BigInt(e.score),
@@ -719,16 +755,15 @@ export default function App() {
 
   // Helper to resolve a contract (deploy or join)
   const resolveContract = useCallback(async (addr?: any) => {
-    const logger = pino({ level: 'warn', browser: { asObject: true } });
-    const manager = new BrowserLeaderboardManager(logger);
+    const manager = getManager();
     const deployment$ = manager.resolve(addr);
     return new Promise<any>((resolve, reject) => {
       const sub = deployment$.subscribe((d) => {
-        if (d.status === 'deployed') { sub.unsubscribe(); resolve(d); }
-        if (d.status === 'failed') { sub.unsubscribe(); reject(d.error); }
+        if (d.status === 'deployed') { Promise.resolve().then(() => sub.unsubscribe()); resolve(d); }
+        if (d.status === 'failed') { Promise.resolve().then(() => sub.unsubscribe()); reject(d.error); }
       });
     });
-  }, []);
+  }, [getManager]);
 
   const deployContract = useCallback(async () => {
     if (!wallet) return;
@@ -932,4 +967,4 @@ Once deployed, play the click challenge, choose a privacy mode, and submit your 
 
 ## Next steps
 
-With the DApp running locally, you can move on to [Production deployment](./deployment.mdx) to deploy the frontend to Vercel and the proof server to Railway.
+With the DApp running locally, you can move on to [Production deployment](./deployment.mdx) to deploy the frontend to Vercel.
