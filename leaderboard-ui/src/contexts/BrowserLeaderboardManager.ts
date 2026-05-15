@@ -103,8 +103,7 @@ const initializeProviders = async (logger: Logger): Promise<LeaderboardProviders
 
   const connectedAPI = await connectToWallet(logger, networkId);
   const config = await connectedAPI.getConfiguration();
-  const rawProofUri = import.meta.env.VITE_PROOF_SERVER_URL ?? config.proverServerUri!;
-  const proofServerUri = rawProofUri.startsWith('/') ? `${window.location.origin}${rawProofUri}` : rawProofUri;
+  const proofServerUri = config.proverServerUri!;
   const shieldedAddresses = await connectedAPI.getShieldedAddresses();
   const zkConfigProvider = new FetchZkConfigProvider<LeaderboardCircuitKeys>(window.location.origin, fetch.bind(window));
 

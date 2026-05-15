@@ -179,7 +179,7 @@ This configuration targets ES2022 with React JSX transform enabled.
 
 ## Environment variables
 
-Create the local development environment file. `VITE_PROOF_SERVER_URL` points to the local Docker proof server. Leave `VITE_DEFAULT_CONTRACT` empty until you deploy a contract in a later step.
+Create the local development environment file. Leave `VITE_DEFAULT_CONTRACT` empty until you deploy a contract in a later step.
 
 ```bash
 touch leaderboard-ui/.env
@@ -192,7 +192,6 @@ VITE_NETWORK_ID=preprod
 VITE_INDEXER_URL=https://indexer.preprod.midnight.network/api/v4/graphql
 VITE_INDEXER_WS_URL=wss://indexer.preprod.midnight.network/api/v4/graphql/ws
 VITE_DEFAULT_CONTRACT=
-VITE_PROOF_SERVER_URL=http://localhost:6300
 ```
 
 ## HTML entry point
@@ -578,8 +577,7 @@ const initializeProviders = async (logger: Logger): Promise<LeaderboardProviders
   setNetworkId(networkId);
   const connectedAPI = await connectToWallet(logger, networkId);
   const config = await connectedAPI.getConfiguration();
-  const rawProofUri = import.meta.env.VITE_PROOF_SERVER_URL ?? config.proverServerUri!;
-  const proofServerUri = rawProofUri.startsWith('/') ? `${window.location.origin}${rawProofUri}` : rawProofUri;
+  const proofServerUri = config.proverServerUri!;
   const shieldedAddresses = await connectedAPI.getShieldedAddresses();
   const zkConfigProvider = new FetchZkConfigProvider<LeaderboardCircuitKeys>(window.location.origin, fetch.bind(window));
 
@@ -969,4 +967,4 @@ Once deployed, play the click challenge, choose a privacy mode, and submit your 
 
 ## Next steps
 
-With the DApp running locally, you can move on to [Production deployment](./deployment.mdx) to deploy the frontend to Vercel and the proof server to Railway.
+With the DApp running locally, you can move on to [Production deployment](./deployment.mdx) to deploy the frontend to Vercel.

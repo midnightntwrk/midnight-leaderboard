@@ -156,7 +156,7 @@ witness localSecretKey(): Bytes<32>;
 witness getCustomName(): Bytes<32>;
 ```
 
-`scores` is the public ledger readable from the indexer. `nextId` auto-increments to assign unique entry IDs. The two `witness` declarations tell the compiler that the TypeScript host provides `localSecretKey` and `getCustomName` at runtime. `localSecretKey` returns a random secret stored in the user's private state. `getCustomName` returns a custom display name.
+`scores` is a public ledger field readable from the indexer. `nextId` auto-increments to assign unique entry IDs. The two `witness` declarations tell the compiler that the TypeScript host provides `localSecretKey` and `getCustomName` at runtime. `localSecretKey` returns a random secret stored in the user's private state. `getCustomName` returns a custom display name.
 
 ### ownerCommitment
 
