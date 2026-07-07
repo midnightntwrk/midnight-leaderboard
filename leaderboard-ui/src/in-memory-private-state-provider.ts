@@ -3,7 +3,7 @@
  * Copied from bboard example — required by midnight-js contracts.
  */
 
-import type { ContractAddress, SigningKey } from '@midnight-ntwrk/compact-runtime';
+import type { ContractAddress, SigningKey } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import type {
   ExportPrivateStatesOptions,
   ExportSigningKeysOptions,

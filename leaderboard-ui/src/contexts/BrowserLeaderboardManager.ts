@@ -5,7 +5,7 @@
  */
 
 import { LeaderboardAPI, type LeaderboardCircuitKeys, type LeaderboardProviders } from '../../../api/src/index';
-import { type ContractAddress, fromHex, toHex } from '@midnight-ntwrk/compact-runtime';
+import { type ContractAddress, fromHex, toHex } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import { BehaviorSubject, catchError, concatMap, filter, firstValueFrom, interval, map, type Observable, take, throwError, timeout } from 'rxjs';
 import { pipe as fnPipe } from 'fp-ts/function';
 import { type Logger } from 'pino';
@@ -14,7 +14,7 @@ import { FetchZkConfigProvider } from '@midnight-ntwrk/midnight-js-fetch-zk-conf
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
 import { indexerPublicDataProvider } from '@midnight-ntwrk/midnight-js-indexer-public-data-provider';
 import semver from 'semver';
-import { Binding, type FinalizedTransaction, Proof, SignatureEnabled, Transaction, type TransactionId } from '@midnight-ntwrk/ledger-v8';
+import { Binding, type FinalizedTransaction, Proof, SignatureEnabled, Transaction, type TransactionId } from '@midnight-ntwrk/midnight-js-protocol/ledger';
 import { type LeaderboardPrivateState } from 'leaderboard-contract';
 import { inMemoryPrivateStateProvider } from '../in-memory-private-state-provider';
 import { type NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';

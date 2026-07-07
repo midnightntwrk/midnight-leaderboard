@@ -8,7 +8,7 @@
  */
 
 import * as Leaderboard from '../../contract/managed/leaderboard/contract/index.js';
-import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
+import { type ContractAddress } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import { type Logger } from 'pino';
 import {
   type LeaderboardDerivedState,

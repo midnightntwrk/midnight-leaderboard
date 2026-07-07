@@ -138,18 +138,6 @@ The proof server is needed because browser JavaScript cannot reach Midnight's pu
 
 Circuit keys are committed in `contract/managed/` so no Compact compiler is needed on Vercel.
 
-## Compatibility
-
-Built against the [Midnight compatibility matrix](https://docs.midnight.network/relnotes/support-matrix):
-
-| Component | Version |
-|-----------|--------|
-| Compact Compiler | 0.31.0 |
-| Compact Runtime | 0.16.0 |
-| Ledger | 8.0.3 |
-| midnight-js | 4.0.4 |
-| DApp Connector API | 4.0.1 |
-| Proof Server | 8.0.3 |
 
 ## License
 

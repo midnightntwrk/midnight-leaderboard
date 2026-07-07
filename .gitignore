@@ -63,3 +63,7 @@ jspm_packages/
 # Dev-time copies of circuit assets (originals in contract/managed/)
 leaderboard-ui/public/keys/
 leaderboard-ui/public/zkir/
+
+# ai scratch work
+.midnight-expert
+.claude
