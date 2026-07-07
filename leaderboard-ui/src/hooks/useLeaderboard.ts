@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { ContractState } from '@midnight-ntwrk/compact-runtime';
+import { ContractState } from '@midnight-ntwrk/midnight-js-protocol/compact-runtime';
 import { Leaderboard } from 'leaderboard-contract';
 import { decodeDisplayName } from '../../../api/src/utils/index.js';
 
