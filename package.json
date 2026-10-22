@@ -20,7 +20,7 @@
     "vite-plugin-wasm": "^3.5.0"
   },
   "dependencies": {
-    "@midnight-ntwrk/compact-js": "2.5.1",
+    "@midnight-ntwrk/compact-js": "2.5.3",
     "@midnight-ntwrk/dapp-connector-api": "4.0.1",
     "@midnight-ntwrk/midnight-js-contracts": "4.1.1",
     "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "4.1.1",
