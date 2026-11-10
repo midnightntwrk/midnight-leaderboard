@@ -11,7 +11,11 @@ import { ContractState } from '@midnight-ntwrk/midnight-js-protocol/compact-runt
 import { Leaderboard } from 'leaderboard-contract';
 import { decodeDisplayName } from '../../../api/src/utils/index.js';
 
-const INDEXER_URL = import.meta.env.VITE_INDEXER_URL ?? 'https://indexer.preprod.midnight.network/api/v4/graphql';
+// Blockfrost serves the Preprod indexer, and every request needs a Midnight Preprod
+// project token. Vite builds the token into the browser bundle, where anyone who
+// loads the page can read it, so use a token you are prepared to treat as public.
+const BLOCKFROST_PROJECT_ID = import.meta.env.VITE_BLOCKFROST_PROJECT_ID ?? '';
+const INDEXER_URL = `${import.meta.env.VITE_INDEXER_URL ?? 'https://midnight-preprod.blockfrost.io/api/v0'}?project_id=${encodeURIComponent(BLOCKFROST_PROJECT_ID)}`;
 
 const CONTRACT_STATE_QUERY = `
   query ContractState($address: HexEncoded!) {
